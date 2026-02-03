@@ -1,41 +1,37 @@
-# Implementation Plan - T3.1 Holdings Calculation Logic (Backend)
+# Implementation Plan - T3.2 Market Price Service (Backend)
 
-거래 내역(Transactions)을 바탕으로 현재 보유 주식(Holdings)과 실현 수익(Realized Profit)을 계산하는 로직을 구현합니다.
+외부 API(`yfinance`)를 사용하여 한국 및 미국 주식의 현재가를 조회합니다.
+빈번한 API 호출을 방지하기 위해 Simple In-Memory Caching (or Redis if available, but for now simple dictionary)를 사용합니다.
 
 ## User Review Required
-> [!IMPORTANT]
-> **실현 수익 계산 방식**: FIFO(선입선출) 방식을 사용하여 정확한 실현 손익을 계산합니다.
-> **평균 단가**: 이동평균법(Moving Average)을 사용하여 "현재 보유 평단"을 계산합니다.
+> [!NOTE]
+> **캐싱 전략**: 현재가를 5분(300초) 동안 캐싱합니다.
+> **장애 대응**: `yfinance` 에러 시 캐시된 최신 가격을 반환하거나, 없으면 에러를 발생시키는 대신 0 또는 마지막 종가를 반환하도록 처리합니다.
 
 ## Proposed Changes
 
 ### Backend
-#### [NEW] [app/services/holding_calculator.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-holdings-be/backend/app/services/holding_calculator.py)
-- `calculate_holdings(transactions: List[Transaction]) -> List[Holding]`
-- Logic:
-  - Sort transactions by date.
-  - Iterate:
-    - BUY: Add qty, update avg_price (Moving Average).
-    - SELL: Deduct qty, calculate Realized Profit (based on FIFO logic or Avg Price logic? Tasks.md said FIFO).
-      - If FIFO: Need to track "Batches" of Buys.
-      - If Moving Average (simpler for MVP): Realized Profit = (Sell Price - Curr Avg Price) * Sell Qty.
-      - **Decision**: Use **Moving Average** for Avg Price, and **Moving Average** for Realized Profit (standard in most retail apps like Webull/Robinhood for display). Tax reporting usually uses FIFO, but for "Asset Status" dashboard, Avg Price difference is more intuitive for "Performance".
-      - However, `tasks.md` specified **FIFO**. I will provide FIFO implementation for Realized Profit to be precise.
-  - Return: List of Holdings (symbol, quantity, avg_price, realized_profit_total).
+#### [NEW] [app/services/price_service.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-prices-be/backend/app/services/price_service.py)
+- `get_current_price(symbol: str, market: str) -> float`
+  - Check Cache.
+  - If miss: `yfinance.Ticker(symbol).history(period='1d')`.
+  - Update Cache.
+- `get_bulk_prices(symbols: List[str]) -> Dict[str, float]`
 
-#### [NEW] [app/schemas/holding.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-holdings-be/backend/app/schemas/holding.py)
-- `Holding` Schema
+#### [MODIFY] [app/services/holding_calculator.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-prices-be/backend/app/services/holding_calculator.py)
+- `calculate_holdings` 함수 내에서 `price_service.get_current_price` 호출하여 `current_price` 및 `valuation_profit` 계산 로직 추가.
+- (Dependencies: `price_service` 주입 필요).
 
-#### [NEW] [app/routes/holdings.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-holdings-be/backend/app/routes/holdings.py)
-- `GET /holdings?account_id={id}`
+#### [MODIFY] [app/routes/holdings.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-prices-be/backend/app/routes/holdings.py)
+- `get_holdings`에서 `calculate_holdings` 호출 시 가격 정보 통합.
 
 ## Verification Plan
 
 ### Automated Tests
-- `backend/tests/unit/test_holding_calculator.py`
-  - Case 1: Buy 10 @ 100 -> Holding 10 @ 100.
-  - Case 2: Buy 10 @ 100, Buy 10 @ 200 -> Holding 20 @ 150.
-  - Case 3: Buy 10 @ 100, Sell 5 @ 150 -> Holding 5 @ 100, Realized Profit 250.
-  - Case 4: Buy 10 @ 100, Buy 10 @ 200, Sell 15 @ 150 (FIFO).
-    - Sell 10 @ 100 (Profit 500), Sell 5 @ 200 (Loss 250). Total Profit 250.
-    - Remaining Holding: 5 @ 200.
+- `backend/tests/integration/test_price_service.py`
+  - `get_current_price("005930.KS")` -> Returns float > 0.
+  - `get_current_price("AAPL")` -> Returns float > 0.
+  - Test Caching: Call twice, verify 2nd call is fast / doesn't hit API (using Mock).
+
+### Manual Verification
+- `/holdings` 호출 시 `current_price`가 채워져 있는지 확인.

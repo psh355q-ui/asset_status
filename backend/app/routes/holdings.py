@@ -22,6 +22,6 @@ async def get_holdings(
     transactions = await transaction_service.get_transactions(db, current_user.id, account_id)
     
     # 2. Calculate holdings
-    holdings = calculate_holdings(transactions)
+    holdings = await calculate_holdings(transactions)
     
     return {"data": holdings}

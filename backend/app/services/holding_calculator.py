@@ -8,7 +8,9 @@ class BuyBatch:
         self.quantity = float(quantity)
         self.price = float(price)
 
-def calculate_holdings(transactions: List[Transaction]) -> List[Holding]:
+from app.services import price_service
+
+async def calculate_holdings(transactions: List[Transaction]) -> List[Holding]:
     # Group by symbol
     grouped_txs: Dict[str, List[Transaction]] = {}
     
@@ -65,11 +67,19 @@ def calculate_holdings(transactions: List[Transaction]) -> List[Holding]:
             total_cost = sum(b.quantity * b.price for b in batches)
             avg_price = total_cost / total_qty
             
+            # Fetch Current Price
+            current_price = await price_service.get_current_price(symbol)
+            valuation_profit = (current_price - avg_price) * total_qty
+            total_value = current_price * total_qty
+
             holdings.append(Holding(
                 symbol=symbol,
                 market=market,
                 quantity=total_qty,
                 avg_price=avg_price,
+                current_price=current_price,
+                total_value=total_value,
+                valuation_profit=valuation_profit,
                 total_realized_profit=realized_profit
             ))
         elif realized_profit != 0:
