@@ -1,0 +1,104 @@
+.advice-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.advice-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.advice-buy {
+    border-left: 4px solid #ff4d4d;
+}
+
+.advice-sell {
+    border-left: 4px solid #4d94ff;
+}
+
+.advice-hold {
+    border-left: 4px solid #888;
+}
+
+.advice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.advice-symbol {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.advice-recommendation {
+    font-size: 1.5rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.advice-summary {
+    font-size: 1rem;
+    color: #ddd;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.advice-confidence {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.confidence-label {
+    font-size: 0.875rem;
+    color: #888;
+}
+
+.confidence-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #10b981;
+}
+
+.advice-details {
+    margin-bottom: 1rem;
+}
+
+.advice-details summary {
+    cursor: pointer;
+    color: #6366f1;
+    font-size: 0.875rem;
+    user-select: none;
+}
+
+.advice-details summary:hover {
+    text-decoration: underline;
+}
+
+.advice-details-content {
+    margin-top: 0.75rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    color: #ccc;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.advice-timestamp {
+    font-size: 0.75rem;
+    color: #666;
+    text-align: right;
+}

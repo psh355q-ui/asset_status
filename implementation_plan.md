@@ -1,42 +1,40 @@
-# Implementation Plan - T4.1 AI Advice Generation Logic (Backend)
+# Implementation Plan - T4.3 AI Advice UI (Frontend)
 
-Google Gemini API(`gemini-2.0-flash`)를 사용하여 사용자의 보유 자산 및 시장 데이터(뉴스 등)를 분석하고 투자 조언을 생성합니다.
+Gemini 2.5 Flash가 제공하는 투자 조언을 사용자가 확인하고, 새로운 조언을 요청할 수 있는 UI를 구현합니다.
 
 ## User Review Required
 > [!IMPORTANT]
-> **사용 모델**: `gemini-2.5-flash` (사용자 지정 모델)
-> **데이터 소스**: `yfinance`를 통한 최신 뉴스 및 가격 정보 + 사용자의 현재 `Holdings` 정보.
-> **프롬프트 전략**: 투자 성향(추후 확장) 및 현재 시장 상황을 고려한 구체적인 Action(BUY/SELL/HOLD) 제안.
+> **디자인**: `AIAdviceCard`는 추천 결과(BUY/SELL/HOLD)를 직관적인 색상과 아이콘으로 강조합니다.
+> **요청 방식**: 특정 종목이 선택된 상태에서 "AI 조언 받기" 버튼을 클릭하여 조언을 생성합니다.
+> **히스토리**: 과거에 생성된 조언 목록을 대시보드 하단이나 별도 페이지에서 확인할 수 있습니다.
 
 ## Proposed Changes
 
-### Backend
-#### [NEW] [app/services/ai_advisor.py](file:///D:/code/ai-trading-system/Asset_Status-phase4-ai-be/backend/app/services/ai_advisor.py)
-- `generate_advice(user_id: UUID, symbol: str) -> AIAdvice`
-- Logic:
-  1. Fetch user's holdings for `symbol`.
-  2. Fetch recent news and price data for `symbol` via `yfinance`.
-  3. Construct prompt with context.
-  4. Call Gemini API.
-  5. Parse JSON response.
-  6. Store in `AI_ADVICE` table.
+### Frontend
+#### [NEW] [src/services/aiAdviceService.ts](file:///D:/code/ai-trading-system/Asset_Status-phase4-fe/frontend/src/services/aiAdviceService.ts)
+- `generateAdvice(symbol: string)`: `POST /ai-advice/generate` 호출.
+- `getAdviceHistory()`: `GET /ai-advice/history` 호출.
 
-#### [NEW] [app/schemas/ai_advice.py](file:///D:/code/ai-trading-system/Asset_Status-phase4-ai-be/backend/app/schemas/ai_advice.py)
-- `AIAdvice` schema: `recommendation`, `summary`, `details`, `confidence`, `symbol`.
+#### [NEW] [src/components/ai-advice/AIAdviceCard.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase4-fe/frontend/src/components/ai-advice/AIAdviceCard.tsx)
+- 추천 타입에 따른 테마 색상 적용 (BUY: Red, SELL: Blue, HOLD: Gray).
+- 신뢰도(Confidence) 게이지 표시.
+- 요약 및 상세 분석 토글.
 
-#### [NEW] [app/routes/ai_advice.py](file:///D:/code/ai-trading-system/Asset_Status-phase4-ai-be/backend/app/routes/ai_advice.py)
-- `POST /ai-advice/generate` -> Trigger generation.
-- `GET /ai-advice/history` -> List previous advices.
+#### [NEW] [src/pages/AIAdvicePage.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase4-fe/frontend/src/pages/AIAdvicePage.tsx)
+- AI 조언 히스토리 리스트.
+- 새로운 종목에 대한 조언 요청 폼.
 
-#### [NEW] [app/models/ai_advice.py](file:///D:/code/ai-trading-system/Asset_Status-phase4-ai-be/backend/app/models/ai_advice.py)
-- `AIAdvice` SQLAlchemy model.
+#### [MODIFY] [src/pages/Dashboard.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase4-fe/frontend/src/pages/Dashboard.tsx)
+- 대시보드 사이드바 또는 섹션에 AI 조언 바로가기/요약 추가.
 
 ## Verification Plan
 
 ### Automated Tests
-- `backend/tests/integration/test_ai_advisor.py`
-  - Mock Gemini API response.
-  - Verify data extraction and DB storage.
+- `src/__tests__/ai-advice/AIAdviceCard.test.tsx`
+  - 추천 결과별 렌더링 확인.
+  - 상세 내용 토글 동작 확인.
 
 ### Manual Verification
-- Swagger UI를 통해 특정 종목에 대한 AI 조언 생성이 정상 작동하고 DB에 저장되는지 확인.
+1. 대시보드에서 종목 선택 후 "AI 조언 받기" 클릭.
+2. 로딩 상태 확인 및 AI 조언 카드 팝업/표시 확인.
+3. AI 조언 페이지에서 과거 히스토리가 정상적으로 나열되는지 확인.
