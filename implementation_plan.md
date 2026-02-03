@@ -1,37 +1,42 @@
-# Implementation Plan - T3.2 Market Price Service (Backend)
+# Implementation Plan - T4.1 AI Advice Generation Logic (Backend)
 
-외부 API(`yfinance`)를 사용하여 한국 및 미국 주식의 현재가를 조회합니다.
-빈번한 API 호출을 방지하기 위해 Simple In-Memory Caching (or Redis if available, but for now simple dictionary)를 사용합니다.
+Google Gemini API(`gemini-2.0-flash`)를 사용하여 사용자의 보유 자산 및 시장 데이터(뉴스 등)를 분석하고 투자 조언을 생성합니다.
 
 ## User Review Required
-> [!NOTE]
-> **캐싱 전략**: 현재가를 5분(300초) 동안 캐싱합니다.
-> **장애 대응**: `yfinance` 에러 시 캐시된 최신 가격을 반환하거나, 없으면 에러를 발생시키는 대신 0 또는 마지막 종가를 반환하도록 처리합니다.
+> [!IMPORTANT]
+> **사용 모델**: `gemini-2.5-flash` (사용자 지정 모델)
+> **데이터 소스**: `yfinance`를 통한 최신 뉴스 및 가격 정보 + 사용자의 현재 `Holdings` 정보.
+> **프롬프트 전략**: 투자 성향(추후 확장) 및 현재 시장 상황을 고려한 구체적인 Action(BUY/SELL/HOLD) 제안.
 
 ## Proposed Changes
 
 ### Backend
-#### [NEW] [app/services/price_service.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-prices-be/backend/app/services/price_service.py)
-- `get_current_price(symbol: str, market: str) -> float`
-  - Check Cache.
-  - If miss: `yfinance.Ticker(symbol).history(period='1d')`.
-  - Update Cache.
-- `get_bulk_prices(symbols: List[str]) -> Dict[str, float]`
+#### [NEW] [app/services/ai_advisor.py](file:///D:/code/ai-trading-system/Asset_Status-phase4-ai-be/backend/app/services/ai_advisor.py)
+- `generate_advice(user_id: UUID, symbol: str) -> AIAdvice`
+- Logic:
+  1. Fetch user's holdings for `symbol`.
+  2. Fetch recent news and price data for `symbol` via `yfinance`.
+  3. Construct prompt with context.
+  4. Call Gemini API.
+  5. Parse JSON response.
+  6. Store in `AI_ADVICE` table.
 
-#### [MODIFY] [app/services/holding_calculator.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-prices-be/backend/app/services/holding_calculator.py)
-- `calculate_holdings` 함수 내에서 `price_service.get_current_price` 호출하여 `current_price` 및 `valuation_profit` 계산 로직 추가.
-- (Dependencies: `price_service` 주입 필요).
+#### [NEW] [app/schemas/ai_advice.py](file:///D:/code/ai-trading-system/Asset_Status-phase4-ai-be/backend/app/schemas/ai_advice.py)
+- `AIAdvice` schema: `recommendation`, `summary`, `details`, `confidence`, `symbol`.
 
-#### [MODIFY] [app/routes/holdings.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-prices-be/backend/app/routes/holdings.py)
-- `get_holdings`에서 `calculate_holdings` 호출 시 가격 정보 통합.
+#### [NEW] [app/routes/ai_advice.py](file:///D:/code/ai-trading-system/Asset_Status-phase4-ai-be/backend/app/routes/ai_advice.py)
+- `POST /ai-advice/generate` -> Trigger generation.
+- `GET /ai-advice/history` -> List previous advices.
+
+#### [NEW] [app/models/ai_advice.py](file:///D:/code/ai-trading-system/Asset_Status-phase4-ai-be/backend/app/models/ai_advice.py)
+- `AIAdvice` SQLAlchemy model.
 
 ## Verification Plan
 
 ### Automated Tests
-- `backend/tests/integration/test_price_service.py`
-  - `get_current_price("005930.KS")` -> Returns float > 0.
-  - `get_current_price("AAPL")` -> Returns float > 0.
-  - Test Caching: Call twice, verify 2nd call is fast / doesn't hit API (using Mock).
+- `backend/tests/integration/test_ai_advisor.py`
+  - Mock Gemini API response.
+  - Verify data extraction and DB storage.
 
 ### Manual Verification
-- `/holdings` 호출 시 `current_price`가 채워져 있는지 확인.
+- Swagger UI를 통해 특정 종목에 대한 AI 조언 생성이 정상 작동하고 DB에 저장되는지 확인.
