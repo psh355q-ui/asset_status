@@ -1,46 +1,47 @@
-# Implementation Plan - T2.1 Account Management API (Backend)
+# Implementation Plan - T2.2 Account Management UI (Frontend)
 
-Phase 2의 첫 번째 단계인 계좌(Account) 관리 API를 구현합니다.
-사용자는 다수의 계좌를 등록하고 관리할 수 있어야 합니다.
-
-## Goal Description
-- **API**: `/accounts` 엔드포인트 구현 (CRUD)
-- **Security**: 로그인한 사용자(JWT)만 본인의 계좌에 접근 가능 (Row Level Security 구현)
-- **Validation**: 계좌명 필수, 통화 코드(KRW/USD) 검증
+계좌 목록을 조회하고 새로운 계좌를 추가할 수 있는 UI를 구현합니다.
+기존 Dashboard 페이지를 확장하여 계좌 관리 기능을 통합합니다.
 
 ## User Review Required
-> [!IMPORTANT]
-> - 초기 잔액은 계좌 생성 시 설정 가능합니다.
-> - 계좌 타입(ISA, CMA, 일반 등)은 문자열로 처리하거나 Enum으로 제한할 수 있습니다. (Contracts에 따름)
+> [!NOTE]
+> - **디자인**: 노션 스타일의 깔끔한 카드 디자인을 적용합니다.
+> - **계좌 생성**: 별도 페이지 이동 없이 모달(Modal) 또는 인라인 폼으로 처리하여 UX를 향상시킵니다. (MVP는 모달 권장)
+> - **초기 데이터**: 계좌가 없을 경우 "첫 계좌를 개설해보세요"와 같은 CTA(Call To Action)를 표시합니다.
 
 ## Proposed Changes
 
-### Backend
-#### [NEW] [schemas/account.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-be/backend/app/schemas/account.py)
-- `AccountCreate`, `AccountUpdate`, `AccountResponse` Pydantic 모델 정의
-- API Contract (`contracts/accounts.contract.ts`) 준수
+### Frontend
+#### [NEW] [components/accounts/AccountCard.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-fe/frontend/src/components/accounts/AccountCard.tsx)
+- 개별 계좌 정보를 보여주는 카드 컴포넌트
+- 계좌명, 타입, 잔액(초기 0원), 아이콘 표시
 
-#### [NEW] [services/account_service.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-be/backend/app/services/account_service.py)
-- `create_account(user_id, account_in)`: 소유자 할당 후 생성
-- `get_accounts(user_id)`: 본인 계좌 목록 조회
-- `get_account(user_id, account_id)`: 본인 계좌 상세 조회 (타인 계좌 조회 불가 확인)
-- `update_account(user_id, account_id, account_in)`
-- `delete_account(user_id, account_id)`
+#### [NEW] [components/accounts/CreateAccountModal.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-fe/frontend/src/components/accounts/CreateAccountModal.tsx)
+- 계좌 생성 폼 (계좌명, 타입 선택)
+- React Hook Form + Zod 사용
 
-#### [NEW] [routes/accounts.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-be/backend/app/routes/accounts.py)
-- FastAPI Router 구현
-- `Depends(get_current_user)`를 통해 인증 및 `user_id` 확보
+#### [NEW] [services/accountService.ts](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-fe/frontend/src/services/accountService.ts)
+- `getAccounts()`: GET /accounts
+- `createAccount(data)`: POST /accounts
+- `deleteAccount(id)`: DELETE /accounts/{id}
 
-#### [MODIFY] [main.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-be/backend/app/main.py)
-- `/accounts` 라우터 등록
+#### [NEW] [store/useAccountStore.ts](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-fe/frontend/src/store/useAccountStore.ts)
+- Zustand 스토어
+- `accounts`: Account[]
+- `fetchAccounts()`: Thunk action
+
+#### [MODIFY] [pages/Dashboard.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-fe/frontend/src/pages/Dashboard.tsx)
+- 계좌 목록 섹션 추가
+- `useAccountStore` 연결
+- "계좌 추가" 버튼 및 모달 연동
 
 ## Verification Plan
 
 ### Automated Tests
-- **Integration Test**: `backend/tests/integration/test_accounts.py`
-  - `test_create_account`: 정상 생성 확인
-  - `test_get_accounts`: 목록 조회 및 데이터 검증
-  - `test_get_account_detail`: 상세 조회
-  - `test_get_others_account`: 타인 계좌 접근 시 404/403 확인 (보안 필수)
-  - `test_update_account`: 수정 확인
-  - `test_delete_account`: 삭제 확인
+- **Component Test**: `frontend/src/__tests__/accounts/AccountCard.test.tsx` (using React Testing Library)
+- **Store Test**: Mock Service를 사용하여 Zustand 액션 테스트
+
+### Manual Verification
+1. 로그인 후 Dashboard 진입 시 계좌 목록 로딩 확인.
+2. "계좌 추가" 클릭 -> 모달 팝업 -> 입력 -> 저장 -> 목록 갱신 확인.
+3. 생성된 계좌가 백엔드 DB에 저장되었는지 확인.
