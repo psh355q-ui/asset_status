@@ -50,8 +50,8 @@
 - `backend/app/__init__.py`
 
 **완료 조건**:
-- [x] 프론트엔드 dev 서버 실행 확인 (`npm run dev`)
-- [x] 백엔드 서버 실행 확인 (`uvicorn app.main:app --reload`)
+- [ ] 프론트엔드 dev 서버 실행 확인 (`npm run dev`)
+- [ ] 백엔드 서버 실행 확인 (`uvicorn app.main:app --reload`)
 
 ---
 
@@ -72,9 +72,9 @@
 - `.env.example`
 
 **완료 조건**:
-- [x] `docker-compose up` 실행 확인
-- [x] PostgreSQL 접속 확인
-- [x] 컨테이너 재시작 후 데이터 유지 확인
+- [ ] `docker-compose up` 실행 확인
+- [ ] PostgreSQL 접속 확인
+- [ ] 컨테이너 재시작 후 데이터 유지 확인
 
 ---
 
@@ -95,8 +95,8 @@
 - `backend/alembic/versions/001_initial_schema.py`
 
 **완료 조건**:
-- [x] `alembic upgrade head` 실행 확인
-- [x] DB에 테이블 생성 확인 (psql로 확인)
+- [ ] `alembic upgrade head` 실행 확인
+- [ ] DB에 테이블 생성 확인 (psql로 확인)
 
 ---
 
@@ -122,8 +122,8 @@
 - `backend/pyproject.toml` (업데이트)
 
 **완료 조건**:
-- [x] 모든 의존성 설치 확인
-- [x] 빌드 에러 없음
+- [ ] 모든 의존성 설치 확인
+- [ ] 빌드 에러 없음
 
 ---
 
@@ -148,9 +148,9 @@
 - `contracts/ai-advice.contract.ts`
 
 **완료 조건**:
-- [x] 모든 API 엔드포인트 정의됨
-- [x] Request/Response 타입 정의됨
-- [x] Pydantic 스키마와 일치 확인
+- [ ] 모든 API 엔드포인트 정의됨
+- [ ] Request/Response 타입 정의됨
+- [ ] Pydantic 스키마와 일치 확인
 
 ---
 
@@ -170,8 +170,8 @@
 - `backend/tests/unit/test_example.py` (예시)
 
 **완료 조건**:
-- [x] `pytest` 실행 확인
-- [x] 테스트 DB 격리 확인
+- [ ] `pytest` 실행 확인
+- [ ] 테스트 DB 격리 확인
 
 ---
 
@@ -190,8 +190,8 @@
 - `frontend/src/mocks/data/mockAccounts.ts` (예시)
 
 **완료 조건**:
-- [x] MSW dev 서버 실행 확인
-- [x] Mock API 응답 확인
+- [ ] MSW dev 서버 실행 확인
+- [ ] Mock API 응답 확인
 
 ---
 
@@ -246,14 +246,14 @@ cd ../Asset_Status-phase1-auth-be
 - `backend/app/utils/jwt.py` (JWT 유틸)
 
 **인수 조건**:
-- [x] 테스트 먼저 작성됨 (RED 확인)
-- [x] 모든 테스트 통과 (GREEN)
-- [x] 커버리지 >= 80%
-- [x] 비밀번호 plain text 저장 안 됨
+- [ ] 테스트 먼저 작성됨 (RED 확인)
+- [ ] 모든 테스트 통과 (GREEN)
+- [ ] 커버리지 >= 80%
+- [ ] 비밀번호 plain text 저장 안 됨
 
 **완료 시**:
-- [x] 사용자 승인 후 main 브랜치에 병합
-- [x] worktree 정리: `git worktree remove ../Asset_Status-phase1-auth-be`
+- [ ] 사용자 승인 후 main 브랜치에 병합
+- [ ] worktree 정리: `git worktree remove ../Asset_Status-phase1-auth-be`
 
 ---
 
@@ -312,16 +312,16 @@ cd ../Asset_Status-phase1-auth-fe
 - `frontend/src/stores/authStore.ts` (Zustand)
 
 **인수 조건**:
-- [x] 테스트 먼저 작성됨 (RED)
-- [x] 모든 테스트 통과 (GREEN)
-- [x] Mock API 사용 확인
-- [x] 모바일 반응형 확인
+- [ ] 테스트 먼저 작성됨 (RED)
+- [ ] 모든 테스트 통과 (GREEN)
+- [ ] Mock API 사용 확인
+- [ ] 모바일 반응형 확인
 
 ---
 
 ## M2: FEAT-1 계좌 관리 (Phase 2)
 
-### [x] Phase 2, T2.1: 계좌 CRUD API (BE) RED→GREEN
+### [] Phase 2, T2.1: 계좌 CRUD API (BE) RED→GREEN
 
 **담당**: backend-specialist
 
@@ -361,8 +361,8 @@ cd ../Asset_Status-phase2-accounts-be
 - `backend/app/schemas/account.py`
 
 **인수 조건**:
-- [x] 테스트 먼저 작성됨 (RED)
-- [x] 모든 테스트 통과 (GREEN)
+- [ ] 테스트 먼저 작성됨 (RED)
+- [ ] 모든 테스트 통과 (GREEN)
 - [ ] 커버리지 >= 80%
 - [ ] user_id로 데이터 격리 확인
 
@@ -423,7 +423,7 @@ cd ../Asset_Status-phase2-accounts-fe
 **인수 조건**:
 - [ ] 테스트 먼저 작성됨
 - [ ] 모든 테스트 통과
-- [ ] 노션 스타일 디자인 적용
+- [x] 노션 스타일 디자인 적용
 - [ ] 모바일 반응형 확인
 
 ---
@@ -467,8 +467,8 @@ cd ../Asset_Status-phase2-transactions-be
 
 **인수 조건**:
 - [ ] 테스트 먼저 작성됨
-- [ ] 모든 테스트 통과
-- [ ] 매도 시 보유 수량 초과 에러 확인
+- [x] 모든 테스트 통과
+- [x] 매도 시 보유 수량 초과 에러 확인
 - [ ] 커버리지 >= 80%
 
 ---
@@ -519,8 +519,8 @@ cd ../Asset_Status-phase2-transactions-fe
 - `frontend/src/services/transactionService.ts`
 
 **인수 조건**:
-- [x] 테스트 먼저 작성됨
-- [x] 모든 테스트 통과
+- [ ] 테스트 먼저 작성됨
+- [ ] 모든 테스트 통과
 - [x] 입력 검증 확인 (수량 > 0, 가격 > 0)
 - [ ] 모바일 최적화 확인
 
@@ -567,7 +567,7 @@ cd ../Asset_Status-phase3-holdings-be
 - `backend/app/schemas/holding.py`
 
 **인수 조건**:
-- [x] 테스트 먼저 작성됨
+- [ ] 테스트 먼저 작성됨
 - [x] 모든 계산 로직 테스트 통과
 - [x] 복잡한 케이스 (여러 매수/매도) 테스트됨
 - [ ] 커버리지 >= 90% (핵심 로직)
@@ -612,14 +612,14 @@ cd ../Asset_Status-phase3-prices-be
 - `backend/app/routes/prices.py`
 
 **인수 조건**:
-- [x] 테스트 먼저 작성됨
-- [x] 삼성전자(005930.KS), Apple(AAPL) 현재가 조회 확인
-- [x] 캐싱 동작 확인
-- [x] API 장애 시 캐시 반환 확인
+- [ ] 테스트 먼저 작성됨
+- [ ] 삼성전자(005930.KS), Apple(AAPL) 현재가 조회 확인
+- [ ] 캐싱 동작 확인
+- [ ] API 장애 시 캐시 반환 확인
 
 ---
 
-### [x] Phase 3, T3.3: 자산 현황 대시보드 UI (FE) RED→GREEN
+### [/] Phase 3, T3.3: 자산 현황 대시보드 UI (FE) RED→GREEN
 
 **담당**: frontend-specialist
 
@@ -677,10 +677,10 @@ cd ../Asset_Status-phase3-dashboard-fe
 - `frontend/src/services/holdingService.ts`
 
 **인수 조건**:
-- [x] 테스트 먼저 작성됨
-- [x] 모든 테스트 통과
-- [x] 총 자산, 수익/손실 표시 확인
-- [x] Recharts 차트 렌더링 확인
+- [ ] 테스트 먼저 작성됨
+- [ ] 모든 테스트 통과
+- [ ] 총 자산, 수익/손실 표시 확인
+- [ ] Recharts 차트 렌더링 확인
 - [ ] 모바일 반응형 확인
 
 ---
