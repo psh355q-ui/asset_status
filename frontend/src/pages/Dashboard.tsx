@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import AccountCard from '../components/accounts/AccountCard';
 import CreateAccountModal from '../components/accounts/CreateAccountModal';
 import TransactionFormModal from '../components/transactions/TransactionFormModal';
-import { Plus, LogOut, DollarSign } from 'lucide-react';
+import { Plus, LogOut, DollarSign, Sparkles } from 'lucide-react';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -47,6 +47,14 @@ const Dashboard = () => {
                     >
                         <DollarSign size={20} />
                         Add Transaction
+                    </button>
+                    <button
+                        onClick={() => navigate('/ai-advice')}
+                        className="btn btn-secondary"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white' }}
+                    >
+                        <Sparkles size={20} />
+                        AI Advice
                     </button>
                     <button onClick={handleLogout} className="btn btn-secondary">
                         <LogOut size={20} />

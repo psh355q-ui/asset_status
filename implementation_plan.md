@@ -1,37 +1,40 @@
-# Implementation Plan - T3.2 Market Price Service (Backend)
+# Implementation Plan - T4.3 AI Advice UI (Frontend)
 
-외부 API(`yfinance`)를 사용하여 한국 및 미국 주식의 현재가를 조회합니다.
-빈번한 API 호출을 방지하기 위해 Simple In-Memory Caching (or Redis if available, but for now simple dictionary)를 사용합니다.
+Gemini 2.5 Flash가 제공하는 투자 조언을 사용자가 확인하고, 새로운 조언을 요청할 수 있는 UI를 구현합니다.
 
 ## User Review Required
-> [!NOTE]
-> **캐싱 전략**: 현재가를 5분(300초) 동안 캐싱합니다.
-> **장애 대응**: `yfinance` 에러 시 캐시된 최신 가격을 반환하거나, 없으면 에러를 발생시키는 대신 0 또는 마지막 종가를 반환하도록 처리합니다.
+> [!IMPORTANT]
+> **디자인**: `AIAdviceCard`는 추천 결과(BUY/SELL/HOLD)를 직관적인 색상과 아이콘으로 강조합니다.
+> **요청 방식**: 특정 종목이 선택된 상태에서 "AI 조언 받기" 버튼을 클릭하여 조언을 생성합니다.
+> **히스토리**: 과거에 생성된 조언 목록을 대시보드 하단이나 별도 페이지에서 확인할 수 있습니다.
 
 ## Proposed Changes
 
-### Backend
-#### [NEW] [app/services/price_service.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-prices-be/backend/app/services/price_service.py)
-- `get_current_price(symbol: str, market: str) -> float`
-  - Check Cache.
-  - If miss: `yfinance.Ticker(symbol).history(period='1d')`.
-  - Update Cache.
-- `get_bulk_prices(symbols: List[str]) -> Dict[str, float]`
+### Frontend
+#### [NEW] [src/services/aiAdviceService.ts](file:///D:/code/ai-trading-system/Asset_Status-phase4-fe/frontend/src/services/aiAdviceService.ts)
+- `generateAdvice(symbol: string)`: `POST /ai-advice/generate` 호출.
+- `getAdviceHistory()`: `GET /ai-advice/history` 호출.
 
-#### [MODIFY] [app/services/holding_calculator.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-prices-be/backend/app/services/holding_calculator.py)
-- `calculate_holdings` 함수 내에서 `price_service.get_current_price` 호출하여 `current_price` 및 `valuation_profit` 계산 로직 추가.
-- (Dependencies: `price_service` 주입 필요).
+#### [NEW] [src/components/ai-advice/AIAdviceCard.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase4-fe/frontend/src/components/ai-advice/AIAdviceCard.tsx)
+- 추천 타입에 따른 테마 색상 적용 (BUY: Red, SELL: Blue, HOLD: Gray).
+- 신뢰도(Confidence) 게이지 표시.
+- 요약 및 상세 분석 토글.
 
-#### [MODIFY] [app/routes/holdings.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-prices-be/backend/app/routes/holdings.py)
-- `get_holdings`에서 `calculate_holdings` 호출 시 가격 정보 통합.
+#### [NEW] [src/pages/AIAdvicePage.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase4-fe/frontend/src/pages/AIAdvicePage.tsx)
+- AI 조언 히스토리 리스트.
+- 새로운 종목에 대한 조언 요청 폼.
+
+#### [MODIFY] [src/pages/Dashboard.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase4-fe/frontend/src/pages/Dashboard.tsx)
+- 대시보드 사이드바 또는 섹션에 AI 조언 바로가기/요약 추가.
 
 ## Verification Plan
 
 ### Automated Tests
-- `backend/tests/integration/test_price_service.py`
-  - `get_current_price("005930.KS")` -> Returns float > 0.
-  - `get_current_price("AAPL")` -> Returns float > 0.
-  - Test Caching: Call twice, verify 2nd call is fast / doesn't hit API (using Mock).
+- `src/__tests__/ai-advice/AIAdviceCard.test.tsx`
+  - 추천 결과별 렌더링 확인.
+  - 상세 내용 토글 동작 확인.
 
 ### Manual Verification
-- `/holdings` 호출 시 `current_price`가 채워져 있는지 확인.
+1. 대시보드에서 종목 선택 후 "AI 조언 받기" 클릭.
+2. 로딩 상태 확인 및 AI 조언 카드 팝업/표시 확인.
+3. AI 조언 페이지에서 과거 히스토리가 정상적으로 나열되는지 확인.

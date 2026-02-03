@@ -3,6 +3,7 @@ import AuthLayout from './components/layout/AuthLayout'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
+import AIAdvicePage from './pages/AIAdvicePage'
 
 function App() {
     return (
@@ -16,6 +17,7 @@ function App() {
 
                 {/* Protected Routes */}
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/ai-advice" element={<AIAdvicePage />} />
 
                 {/* Default Redirect */}
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
