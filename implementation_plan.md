@@ -1,40 +1,62 @@
-# Implementation Plan - T4.3 AI Advice UI (Frontend)
+# Implementation Plan - T5.1 E2E Testing (Playwright)
 
-Gemini 2.5 Flash가 제공하는 투자 조언을 사용자가 확인하고, 새로운 조언을 요청할 수 있는 UI를 구현합니다.
+주요 사용자 플로우를 E2E 테스트로 자동화하여 전체 시스템의 안정성을 검증합니다.
 
 ## User Review Required
 > [!IMPORTANT]
-> **디자인**: `AIAdviceCard`는 추천 결과(BUY/SELL/HOLD)를 직관적인 색상과 아이콘으로 강조합니다.
-> **요청 방식**: 특정 종목이 선택된 상태에서 "AI 조언 받기" 버튼을 클릭하여 조언을 생성합니다.
-> **히스토리**: 과거에 생성된 조언 목록을 대시보드 하단이나 별도 페이지에서 확인할 수 있습니다.
+> **테스트 범위**: 회원가입부터 AI 조언 조회까지 전체 플로우를 커버합니다.
+> **도구**: Playwright를 사용하여 크로스 브라우저 테스트를 지원합니다.
+> **실행 환경**: 로컬 개발 서버(backend + frontend)가 실행 중이어야 합니다.
 
 ## Proposed Changes
 
-### Frontend
-#### [NEW] [src/services/aiAdviceService.ts](file:///D:/code/ai-trading-system/Asset_Status-phase4-fe/frontend/src/services/aiAdviceService.ts)
-- `generateAdvice(symbol: string)`: `POST /ai-advice/generate` 호출.
-- `getAdviceHistory()`: `GET /ai-advice/history` 호출.
+### Frontend E2E Tests
+#### [NEW] [frontend/e2e/auth.spec.ts](file:///D:/code/ai-trading-system/Asset_Status-phase5-e2e/frontend/e2e/auth.spec.ts)
+- 회원가입 플로우 테스트
+- 로그인/로그아웃 테스트
+- 인증 토큰 유지 확인
 
-#### [NEW] [src/components/ai-advice/AIAdviceCard.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase4-fe/frontend/src/components/ai-advice/AIAdviceCard.tsx)
-- 추천 타입에 따른 테마 색상 적용 (BUY: Red, SELL: Blue, HOLD: Gray).
-- 신뢰도(Confidence) 게이지 표시.
-- 요약 및 상세 분석 토글.
+#### [NEW] [frontend/e2e/accounts.spec.ts](file:///D:/code/ai-trading-system/Asset_Status-phase5-e2e/frontend/e2e/accounts.spec.ts)
+- 계좌 생성 테스트
+- 계좌 목록 조회 테스트
+- 계좌별 거래 입력 테스트
 
-#### [NEW] [src/pages/AIAdvicePage.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase4-fe/frontend/src/pages/AIAdvicePage.tsx)
-- AI 조언 히스토리 리스트.
-- 새로운 종목에 대한 조언 요청 폼.
+#### [NEW] [frontend/e2e/holdings.spec.ts](file:///D:/code/ai-trading-system/Asset_Status-phase5-e2e/frontend/e2e/holdings.spec.ts)
+- 자산 현황 대시보드 렌더링 테스트
+- 보유 자산 테이블 데이터 확인
+- 차트 표시 확인
 
-#### [MODIFY] [src/pages/Dashboard.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase4-fe/frontend/src/pages/Dashboard.tsx)
-- 대시보드 사이드바 또는 섹션에 AI 조언 바로가기/요약 추가.
+#### [NEW] [frontend/e2e/ai-advice.spec.ts](file:///D:/code/ai-trading-system/Asset_Status-phase5-e2e/frontend/e2e/ai-advice.spec.ts)
+- AI 조언 페이지 접근 테스트
+- 새로운 조언 요청 플로우
+- 조언 히스토리 확인
+
+#### [NEW] [playwright.config.ts](file:///D:/code/ai-trading-system/Asset_Status-phase5-e2e/frontend/playwright.config.ts)
+- Playwright 설정 파일
+- 베이스 URL, 타임아웃, 브라우저 설정
 
 ## Verification Plan
 
-### Automated Tests
-- `src/__tests__/ai-advice/AIAdviceCard.test.tsx`
-  - 추천 결과별 렌더링 확인.
-  - 상세 내용 토글 동작 확인.
+### Setup
+```bash
+cd frontend
+npm install -D @playwright/test
+npx playwright install
+```
 
-### Manual Verification
-1. 대시보드에서 종목 선택 후 "AI 조언 받기" 클릭.
-2. 로딩 상태 확인 및 AI 조언 카드 팝업/표시 확인.
-3. AI 조언 페이지에서 과거 히스토리가 정상적으로 나열되는지 확인.
+### Test Execution
+```bash
+# 모든 E2E 테스트 실행
+npx playwright test
+
+# 특정 테스트만 실행
+npx playwright test e2e/auth.spec.ts
+
+# UI 모드로 실행
+npx playwright test --ui
+```
+
+### Expected Results
+- 모든 E2E 테스트가 통과해야 합니다.
+- 테스트 실행 시간은 전체 5분 이내여야 합니다.
+- 스크린샷/비디오 캡처로 실패 시 디버깅 가능해야 합니다.
