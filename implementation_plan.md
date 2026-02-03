@@ -1,47 +1,50 @@
-# Implementation Plan - T2.2 Account Management UI (Frontend)
+# Implementation Plan - T2.3 Transaction Management API (Backend)
 
-계좌 목록을 조회하고 새로운 계좌를 추가할 수 있는 UI를 구현합니다.
-기존 Dashboard 페이지를 확장하여 계좌 관리 기능을 통합합니다.
+주식, ETF 등의 거래 내역(매수/매도)을 기록하고 관리하는 API를 구현합니다.
+매도(SELL) 시에는 해당 계좌에 충분한 보유 수량이 있는지 검증해야 합니다.
+
+## Goal Description
+- **API**: `/transactions` (CRUD)
+- **Logic**:
+  - `POST /transactions`: 거래 기록 (매수/매도/배당 등)
+  - `GET /transactions`: 계좌별, 종목별 필터링 조회
+- **Validation**:
+  - 기본적인 값 검증 (수량 > 0, 가격 >= 0)
+  - **Business Rule**: 매도 시, 해당 계좌의 해당 종목 보유 수량 >= 매도 수량 (Simple Validation)
 
 ## User Review Required
 > [!NOTE]
-> - **디자인**: 노션 스타일의 깔끔한 카드 디자인을 적용합니다.
-> - **계좌 생성**: 별도 페이지 이동 없이 모달(Modal) 또는 인라인 폼으로 처리하여 UX를 향상시킵니다. (MVP는 모달 권장)
-> - **초기 데이터**: 계좌가 없을 경우 "첫 계좌를 개설해보세요"와 같은 CTA(Call To Action)를 표시합니다.
+> - **보유 수량 계산**: 현재(M2) 단계에서는 `Transaction` 테이블의 합산으로만 계산합니다. (복잡한 배당 재투자나 분할 이슈는 M3/M4에서 다룸)
+> - **통화**: 계좌의 통화(KRW/USD)와 거래 통화가 일치한다고 가정합니다. (환전 로직 제외)
 
 ## Proposed Changes
 
-### Frontend
-#### [NEW] [components/accounts/AccountCard.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-fe/frontend/src/components/accounts/AccountCard.tsx)
-- 개별 계좌 정보를 보여주는 카드 컴포넌트
-- 계좌명, 타입, 잔액(초기 0원), 아이콘 표시
+### Backend
+#### [NEW] [schemas/transaction.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-be/backend/app/schemas/transaction.py)
+- `TransactionCreate`, `TransactionResponse` 정의
+- `TransactionType` Enum (BUY, SELL, DIVIDEND, DEPOSIT, WITHDRAW) 사용
 
-#### [NEW] [components/accounts/CreateAccountModal.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-fe/frontend/src/components/accounts/CreateAccountModal.tsx)
-- 계좌 생성 폼 (계좌명, 타입 선택)
-- React Hook Form + Zod 사용
+#### [NEW] [services/transaction_service.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-be/backend/app/services/transaction_service.py)
+- `create_transaction`:
+  - 매도(SELL) 요청 시 `validate_holdings(account_id, symbol, quantity)` 호출
+  - DB 저장
+- `get_transactions`: 필터링 조회
+- `validate_holdings`: 해당 계좌/종목의 (총 매수 - 총 매도) 계산
 
-#### [NEW] [services/accountService.ts](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-fe/frontend/src/services/accountService.ts)
-- `getAccounts()`: GET /accounts
-- `createAccount(data)`: POST /accounts
-- `deleteAccount(id)`: DELETE /accounts/{id}
+#### [NEW] [routes/transactions.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-be/backend/app/routes/transactions.py)
+- Router 정의
 
-#### [NEW] [store/useAccountStore.ts](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-fe/frontend/src/store/useAccountStore.ts)
-- Zustand 스토어
-- `accounts`: Account[]
-- `fetchAccounts()`: Thunk action
+#### [MODIFY] [models/transaction.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-be/backend/app/models/transaction.py)
+- 모델 필드 확인 및 필요 시 인덱스 추가 (account_id, symbol)
 
-#### [MODIFY] [pages/Dashboard.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase2-account-fe/frontend/src/pages/Dashboard.tsx)
-- 계좌 목록 섹션 추가
-- `useAccountStore` 연결
-- "계좌 추가" 버튼 및 모달 연동
+#### [MODIFY] [main.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-be/backend/app/main.py)
+- 라우터 등록
 
 ## Verification Plan
 
 ### Automated Tests
-- **Component Test**: `frontend/src/__tests__/accounts/AccountCard.test.tsx` (using React Testing Library)
-- **Store Test**: Mock Service를 사용하여 Zustand 액션 테스트
-
-### Manual Verification
-1. 로그인 후 Dashboard 진입 시 계좌 목록 로딩 확인.
-2. "계좌 추가" 클릭 -> 모달 팝업 -> 입력 -> 저장 -> 목록 갱신 확인.
-3. 생성된 계좌가 백엔드 DB에 저장되었는지 확인.
+- **Integration Test**: `backend/tests/integration/test_transactions.py`
+  - `test_create_buy`: 매수 성공
+  - `test_create_sell_success`: 보유 수량 내 매도 성공
+  - `test_create_sell_fail`: 보유 수량 부족 시 에러 (400 Bad Request)
+  - `test_get_transactions`: 필터링 동작 확인

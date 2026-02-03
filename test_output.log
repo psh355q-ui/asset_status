@@ -1,0 +1,55 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.0, pytest-8.4.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\code\ai-trading-system\Asset_Status-phase2-transaction-be
+configfile: pytest.ini
+plugins: anyio-4.12.0, locust-2.42.5, asyncio-1.2.0, cov-7.0.0, mock-3.15.1, langsmith-0.6.4
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 4 items
+
+backend/tests/integration/test_transactions.py::test_create_buy_transaction PASSED [ 25%]
+backend/tests/integration/test_transactions.py::test_create_sell_transaction_success PASSED [ 50%]
+backend/tests/integration/test_transactions.py::test_create_sell_transaction_fail_insufficient PASSED [ 75%]
+backend/tests/integration/test_transactions.py::test_get_transactions FAILED [100%]
+
+================================== FAILURES ===================================
+____________________________ test_get_transactions ____________________________
+
+client = <httpx.AsyncClient object at 0x000001B9C92CC3E0>
+auth_headers = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyYjMzMDBkZC04ODNjLTQyY2QtOTdjNy0yYmFlOTU1ZWE1NDEiLCJleHAiOjE3NzAxMjkxMzB9.wmVPd4S6xy3EGl6X65Q940IkBXpBvj2OdViT-P-6xCE'}
+test_account = {'account_type': 'GENERAL', 'created_at': '2026-02-03T14:02:10.048097Z', 'id': '4a257b9e-cb0b-4dcd-824c-081cf2f2960e', 'name': 'Test Account', ...}
+
+    @pytest.mark.asyncio
+    async def test_get_transactions(client: AsyncClient, auth_headers, test_account):
+        # Buy
+        await client.post(
+            "/transactions",
+            json={
+                "account_id": test_account["id"],
+                "symbol": "005930",
+                "market": "KR",
+                "type": "BUY",
+                "quantity": 10,
+                "price": 70000,
+                "trade_date": str(date.today())
+            },
+            headers=auth_headers
+        )
+    
+        # Get List
+        response = await client.get(f"/transactions?account_id={test_account['id']}", headers=auth_headers)
+        assert response.status_code == 200
+        data = response.json()["data"] # Paginated? Check contract. "data": { items: [], total: ... } or "data": [] ?
+        # Contract says: export type GetTransactionsResponse = PaginatedResponse<Transaction>;
+        # Usually PaginatedResponse structure is { items: T[], total: number, page: number, size: number }
+        # So response.json() might be { "items": [...], "total": 1 } OR wrapper { "data": { "items": ... } }
+        # Check `types.ts`: usually ApiResponse<T> = { data: T }.
+        # So if T is PaginatedResponse, then result is { data: { items: [], total: 1 } }.
+    
+>       assert "items" in data
+E       AssertionError: assert 'items' in [{'account_id': '4a257b9e-cb0b-4dcd-824c-081cf2f2960e', 'created_at': '2026-02-03T14:02:10.247196Z', 'id': '42692af4-3ebd-41e9-afc8-089088da0355', 'market': 'KR', ...}]
+
+backend\tests\integration\test_transactions.py:100: AssertionError
+=========================== short test summary info ===========================
+FAILED backend/tests/integration/test_transactions.py::test_get_transactions
+========================= 1 failed, 3 passed in 2.75s =========================

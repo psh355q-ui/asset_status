@@ -72,4 +72,14 @@ async def auth_headers(client, regular_user):
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
+@pytest.fixture
+async def test_account(client, auth_headers):
+    response = await client.post(
+        "/accounts",
+        json={"name": "Test Account", "account_type": "GENERAL"},
+        headers=auth_headers
+    )
+    assert response.status_code == 200
+    return response.json()["data"]
+
 
