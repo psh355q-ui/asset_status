@@ -687,7 +687,7 @@ cd ../Asset_Status-phase3-dashboard-fe
 
 ## M4: FEAT-2 AI 투자 조언 (Phase 4)
 
-### [] Phase 4, T4.1: AI 조언 생성 로직 (BE) RED→GREEN
+### [x] Phase 4, T4.1: AI 조언 생성 로직 (BE) RED→GREEN
 
 **담당**: backend-specialist
 
@@ -728,14 +728,14 @@ cd ../Asset_Status-phase4-ai-be
 - `backend/app/schemas/ai_advice.py`
 
 **인수 조건**:
-- [ ] 테스트 먼저 작성됨 (Mock LLM 응답)
-- [ ] 모든 테스트 통과
-- [ ] 조언 생성 < 10초
-- [ ] recommendation이 BUY/SELL/HOLD 둘 중 하나
+- [x] 테스트 먼저 작성됨 (Mock LLM 응답)
+- [x] 모든 테스트 통과
+- [x] 조언 생성 < 10초
+- [x] recommendation이 BUY/SELL/HOLD 둘 중 하나
 
 ---
 
-### [] Phase 4, T4.2: AI 조언 히스토리 조회 API (BE) RED→GREEN
+### [/] Phase 4, T4.2: AI 조언 히스토리 조회 API (BE) RED→GREEN
 
 **담당**: backend-specialist
 
@@ -772,7 +772,7 @@ cd ../Asset_Status-phase4-ai-be
 
 ---
 
-### [] Phase 4, T4.3: AI 조언 UI (FE) RED→GREEN
+### [x] Phase 4, T4.3: AI 조언 UI (FE) RED→GREEN
 
 **담당**: frontend-specialist
 
@@ -826,10 +826,10 @@ cd ../Asset_Status-phase4-ai-fe
 - `frontend/src/services/aiAdviceService.ts`
 
 **인수 조건**:
-- [ ] 테스트 먼저 작성됨
-- [ ] 모든 테스트 통과
-- [ ] 면책 고지 표시 확인
-- [ ] 결과 우선, 상세 토글 확인
+- [x] 테스트 먼저 작성됨
+- [x] 모든 테스트 통과
+- [x] 면책 고지 표시 확인
+- [x] 결과 우선, 상세 토글 확인
 - [ ] 모바일 최적화 확인
 
 ---
