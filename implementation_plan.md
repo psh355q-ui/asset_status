@@ -1,50 +1,50 @@
-# Implementation Plan - T2.3 Transaction Management API (Backend)
+# Implementation Plan - T2.4 Transaction Input UI (Frontend)
 
-주식, ETF 등의 거래 내역(매수/매도)을 기록하고 관리하는 API를 구현합니다.
-매도(SELL) 시에는 해당 계좌에 충분한 보유 수량이 있는지 검증해야 합니다.
-
-## Goal Description
-- **API**: `/transactions` (CRUD)
-- **Logic**:
-  - `POST /transactions`: 거래 기록 (매수/매도/배당 등)
-  - `GET /transactions`: 계좌별, 종목별 필터링 조회
-- **Validation**:
-  - 기본적인 값 검증 (수량 > 0, 가격 >= 0)
-  - **Business Rule**: 매도 시, 해당 계좌의 해당 종목 보유 수량 >= 매도 수량 (Simple Validation)
+사용자가 주식, ETF 등의 거래 내역을 입력할 수 있는 모달 폼을 구현합니다.
+대시보드 또는 계좌 상세 화면에서 접근할 수 있습니다.
 
 ## User Review Required
 > [!NOTE]
-> - **보유 수량 계산**: 현재(M2) 단계에서는 `Transaction` 테이블의 합산으로만 계산합니다. (복잡한 배당 재투자나 분할 이슈는 M3/M4에서 다룸)
-> - **통화**: 계좌의 통화(KRW/USD)와 거래 통화가 일치한다고 가정합니다. (환전 로직 제외)
+> - **진입점**: 대시보드 상단에 "Add Transaction" 버튼을 배치하여 모달을 띄웁니다.
+> - **계좌 선택**: 모달 내부에서 거래할 계좌를 선택할 수 있게 합니다. (계좌 목록 불러오기 필요)
+> - **검증**: 수량, 가격은 0보다 커야 합니다. 심볼은 필수입니다.
 
 ## Proposed Changes
 
-### Backend
-#### [NEW] [schemas/transaction.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-be/backend/app/schemas/transaction.py)
-- `TransactionCreate`, `TransactionResponse` 정의
-- `TransactionType` Enum (BUY, SELL, DIVIDEND, DEPOSIT, WITHDRAW) 사용
+### Frontend
+#### [NEW] [components/transactions/TransactionFormModal.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-fe/frontend/src/components/transactions/TransactionFormModal.tsx)
+- 거래 입력 폼 Modal
+- Fields:
+  - Account (Select)
+  - Market (Radio: KR/US)
+  - Type (Radio/Select: BUY/SELL/...)
+  - Symbol (Input)
+  - Quantity (Number Input)
+  - Price (Number Input)
+  - Date (Date Input, default Today)
+- React Hook Form + Zod Validation
 
-#### [NEW] [services/transaction_service.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-be/backend/app/services/transaction_service.py)
-- `create_transaction`:
-  - 매도(SELL) 요청 시 `validate_holdings(account_id, symbol, quantity)` 호출
-  - DB 저장
-- `get_transactions`: 필터링 조회
-- `validate_holdings`: 해당 계좌/종목의 (총 매수 - 총 매도) 계산
+#### [NEW] [services/transactionService.ts](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-fe/frontend/src/services/transactionService.ts)
+- `createTransaction(data)`
+- `getTransactions(filters)`
 
-#### [NEW] [routes/transactions.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-be/backend/app/routes/transactions.py)
-- Router 정의
+#### [MODIFY] [pages/Dashboard.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-fe/frontend/src/pages/Dashboard.tsx)
+- "Add Transaction" 버튼 추가
+- 모달 상태 관리 (isOpen)
 
-#### [MODIFY] [models/transaction.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-be/backend/app/models/transaction.py)
-- 모델 필드 확인 및 필요 시 인덱스 추가 (account_id, symbol)
-
-#### [MODIFY] [main.py](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-be/backend/app/main.py)
-- 라우터 등록
+#### [MODIFY] [store/useTransactionStore.ts](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-fe/frontend/src/store/useTransactionStore.ts)
+- (New file) Transaction 상태 관리 (Optional, or just Service call directly form Modal)
+- Let's use `useAccountStore` to refresh accounts? No, need to refresh transaction list if we display it.
+- For now, T2.4 focuses on **Input**. T3.1 will do Holdings calculation.
 
 ## Verification Plan
 
 ### Automated Tests
-- **Integration Test**: `backend/tests/integration/test_transactions.py`
-  - `test_create_buy`: 매수 성공
-  - `test_create_sell_success`: 보유 수량 내 매도 성공
-  - `test_create_sell_fail`: 보유 수량 부족 시 에러 (400 Bad Request)
-  - `test_get_transactions`: 필터링 동작 확인
+- **Component Test**: `frontend/src/__tests__/transactions/TransactionForm.test.tsx`
+  - 폼 렌더링 확인
+  - 유효성 검사 에러 확인 (필수값 누락, 음수 입력)
+  - 제출 시 API 호출 확인 (Mock Service)
+
+### Manual Verification
+1. 대시보드 -> "Add Transaction" 클릭 -> 모달 뜸.
+2. 입력 -> 저장 -> 성공 메시지. (DB 저장 확인).

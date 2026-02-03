@@ -4,7 +4,8 @@ import { useAccountStore } from '../store/useAccountStore';
 import { useNavigate } from 'react-router-dom';
 import AccountCard from '../components/accounts/AccountCard';
 import CreateAccountModal from '../components/accounts/CreateAccountModal';
-import { Plus, LogOut } from 'lucide-react';
+import TransactionFormModal from '../components/transactions/TransactionFormModal';
+import { Plus, LogOut, DollarSign } from 'lucide-react';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -12,6 +13,7 @@ const Dashboard = () => {
     const { accounts, fetchAccounts, isLoading } = useAccountStore();
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
 
     useEffect(() => {
         fetchAccounts();
@@ -37,6 +39,14 @@ const Dashboard = () => {
                     >
                         <Plus size={20} />
                         Add Account
+                    </button>
+                    <button
+                        onClick={() => setIsTransactionModalOpen(true)}
+                        className="btn btn-secondary"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.1)', color: 'white' }}
+                    >
+                        <DollarSign size={20} />
+                        Add Transaction
                     </button>
                     <button onClick={handleLogout} className="btn btn-secondary">
                         <LogOut size={20} />
@@ -73,6 +83,7 @@ const Dashboard = () => {
             </main>
 
             <CreateAccountModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            <TransactionFormModal isOpen={isTransactionModalOpen} onClose={() => setIsTransactionModalOpen(false)} />
         </div>
     );
 };
