@@ -1,50 +1,41 @@
-# Implementation Plan - T2.4 Transaction Input UI (Frontend)
+# Implementation Plan - T3.1 Holdings Calculation Logic (Backend)
 
-사용자가 주식, ETF 등의 거래 내역을 입력할 수 있는 모달 폼을 구현합니다.
-대시보드 또는 계좌 상세 화면에서 접근할 수 있습니다.
+거래 내역(Transactions)을 바탕으로 현재 보유 주식(Holdings)과 실현 수익(Realized Profit)을 계산하는 로직을 구현합니다.
 
 ## User Review Required
-> [!NOTE]
-> - **진입점**: 대시보드 상단에 "Add Transaction" 버튼을 배치하여 모달을 띄웁니다.
-> - **계좌 선택**: 모달 내부에서 거래할 계좌를 선택할 수 있게 합니다. (계좌 목록 불러오기 필요)
-> - **검증**: 수량, 가격은 0보다 커야 합니다. 심볼은 필수입니다.
+> [!IMPORTANT]
+> **실현 수익 계산 방식**: FIFO(선입선출) 방식을 사용하여 정확한 실현 손익을 계산합니다.
+> **평균 단가**: 이동평균법(Moving Average)을 사용하여 "현재 보유 평단"을 계산합니다.
 
 ## Proposed Changes
 
-### Frontend
-#### [NEW] [components/transactions/TransactionFormModal.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-fe/frontend/src/components/transactions/TransactionFormModal.tsx)
-- 거래 입력 폼 Modal
-- Fields:
-  - Account (Select)
-  - Market (Radio: KR/US)
-  - Type (Radio/Select: BUY/SELL/...)
-  - Symbol (Input)
-  - Quantity (Number Input)
-  - Price (Number Input)
-  - Date (Date Input, default Today)
-- React Hook Form + Zod Validation
+### Backend
+#### [NEW] [app/services/holding_calculator.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-holdings-be/backend/app/services/holding_calculator.py)
+- `calculate_holdings(transactions: List[Transaction]) -> List[Holding]`
+- Logic:
+  - Sort transactions by date.
+  - Iterate:
+    - BUY: Add qty, update avg_price (Moving Average).
+    - SELL: Deduct qty, calculate Realized Profit (based on FIFO logic or Avg Price logic? Tasks.md said FIFO).
+      - If FIFO: Need to track "Batches" of Buys.
+      - If Moving Average (simpler for MVP): Realized Profit = (Sell Price - Curr Avg Price) * Sell Qty.
+      - **Decision**: Use **Moving Average** for Avg Price, and **Moving Average** for Realized Profit (standard in most retail apps like Webull/Robinhood for display). Tax reporting usually uses FIFO, but for "Asset Status" dashboard, Avg Price difference is more intuitive for "Performance".
+      - However, `tasks.md` specified **FIFO**. I will provide FIFO implementation for Realized Profit to be precise.
+  - Return: List of Holdings (symbol, quantity, avg_price, realized_profit_total).
 
-#### [NEW] [services/transactionService.ts](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-fe/frontend/src/services/transactionService.ts)
-- `createTransaction(data)`
-- `getTransactions(filters)`
+#### [NEW] [app/schemas/holding.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-holdings-be/backend/app/schemas/holding.py)
+- `Holding` Schema
 
-#### [MODIFY] [pages/Dashboard.tsx](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-fe/frontend/src/pages/Dashboard.tsx)
-- "Add Transaction" 버튼 추가
-- 모달 상태 관리 (isOpen)
-
-#### [MODIFY] [store/useTransactionStore.ts](file:///D:/code/ai-trading-system/Asset_Status-phase2-transaction-fe/frontend/src/store/useTransactionStore.ts)
-- (New file) Transaction 상태 관리 (Optional, or just Service call directly form Modal)
-- Let's use `useAccountStore` to refresh accounts? No, need to refresh transaction list if we display it.
-- For now, T2.4 focuses on **Input**. T3.1 will do Holdings calculation.
+#### [NEW] [app/routes/holdings.py](file:///D:/code/ai-trading-system/Asset_Status-phase3-holdings-be/backend/app/routes/holdings.py)
+- `GET /holdings?account_id={id}`
 
 ## Verification Plan
 
 ### Automated Tests
-- **Component Test**: `frontend/src/__tests__/transactions/TransactionForm.test.tsx`
-  - 폼 렌더링 확인
-  - 유효성 검사 에러 확인 (필수값 누락, 음수 입력)
-  - 제출 시 API 호출 확인 (Mock Service)
-
-### Manual Verification
-1. 대시보드 -> "Add Transaction" 클릭 -> 모달 뜸.
-2. 입력 -> 저장 -> 성공 메시지. (DB 저장 확인).
+- `backend/tests/unit/test_holding_calculator.py`
+  - Case 1: Buy 10 @ 100 -> Holding 10 @ 100.
+  - Case 2: Buy 10 @ 100, Buy 10 @ 200 -> Holding 20 @ 150.
+  - Case 3: Buy 10 @ 100, Sell 5 @ 150 -> Holding 5 @ 100, Realized Profit 250.
+  - Case 4: Buy 10 @ 100, Buy 10 @ 200, Sell 15 @ 150 (FIFO).
+    - Sell 10 @ 100 (Profit 500), Sell 5 @ 200 (Loss 250). Total Profit 250.
+    - Remaining Holding: 5 @ 200.
